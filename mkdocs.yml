@@ -89,5 +89,4 @@ plugins:
       type: datetime
       locale: zh
   - tags
-  - bibtex
   - mkdocs-jupyter
