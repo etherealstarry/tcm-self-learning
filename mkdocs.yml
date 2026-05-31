@@ -1,0 +1,93 @@
+site_name: 中医自学指南
+site_url: https://etherealstarry.github.io/tcm-self-learning/
+site_author: EtherealStarry
+site_description: 基于北京中医药大学培养方案的中医专业自学指南，仿照 CS 自学指南风格，为中医专业学生提供系统的学习路径与资源。
+repo_url: https://github.com/etherealstarry/tcm-self-learning
+repo_name: etherealstarry/tcm-self-learning
+edit_uri: edit/main/docs/
+
+copyright: Copyright © 2024-present EtherealStarry
+
+theme:
+  name: material
+  language: zh
+  icon:
+    logo: material/flower
+    repo: fontawesome/brands/github
+  favicon: assets/images/favicon.ico
+  palette:
+    # 中医风格配色：朱砂红 + 药草绿
+    - scheme: default
+      primary: red
+      accent: green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: red
+      accent: green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
+    - content.code.copy
+  custom_dir: overrides
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/etherealstarry
+      name: EtherealStarry on GitHub
+  analytics:
+    provider: false
+
+extra_css:
+  - assets/css/extra.css
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      type: datetime
+      locale: zh
+  - tags
+  - bibtex
+  - mkdocs-jupyter

@@ -1,0 +1,10 @@
+site/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.idea/
+.vscode/
+overrides/
+*.log
+.env
