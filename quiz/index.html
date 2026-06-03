@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中医体质自测</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #FAF8F5;
+            color: #3C3A36;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 680px;
+            margin: 40px auto;
+            background: white;
+            border: 1px solid #E6E1DA;
+            border-radius: 12px;
+            padding: 40px 30px;
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .header p { font-size: 14px; color: #7A746B; }
+        
+        .quiz-box { display: none; }
+        .quiz-box.active { display: block; }
+        
+        .question-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+        .question-sub { font-size: 13px; color: #7A746B; margin-bottom: 24px; }
+        
+        .option-card {
+            background: white;
+            border: 1px solid #E6E1DA;
+            border-radius: 12px;
+            padding: 18px 20px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+        .option-card:hover {
+            border-color: #8EA89D;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .option-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .option-card p { font-size: 13px; color: #7A746B; }
+        
+        .result-box { display: none; }
+        .result-box.active { display: block; }
+        .result-title { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: #FF6B6B; }
+        .result-desc { font-size: 15px; margin-bottom: 30px; background: #FDFDFD; padding: 16px; border-radius: 8px; line-height: 1.8; }
+        
+        .btn-restart {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #8EA89D;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 35px;
+        }
+        .btn-restart:hover { background: #7A958A; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="main-title">中医体质自测</h1>
+            <p id="main-subtitle">正在加载...</p>
+        </div>
+        
+        <div id="quiz-container"></div>
+        
+        <div id="result-container" class="result-box">
+            <div class="result-title" id="res-title"></div>
+            <div class="result-desc" id="res-desc"></div>
+            <button class="btn-restart" onclick="restartQuiz()">重新测评</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== 数据 =====
+        var questions = [
+            {
+                text: "1. 你平时更怕冷还是怕热？",
+                subtext: "想象在一个开着标准空调的房间里，你的真实感受是？",
+                options: [
+                    {
+                        text: "怕冷，喜欢温暖",
+                        desc: "手脚容易冰凉，总想喝温热水，吃凉的心里不舒服。",
+                        scores: { "阳虚质": 3, "阴虚质": 0, "气滞质": 1, "湿热质": 0, "平和质": 0 }
+                    },
+                    {
+                        text: "怕热，喜欢凉爽",
+                        desc: "体热容易出汗，喜欢喝冰饮，容易觉得心里燥热。",
+                        scores: { "阳虚质": 0, "阴虚质": 3, "气滞质": 0, "湿热质": 2, "平和质": 0 }
+                    },
+                    {
+                        text: "不特别怕冷，也不特别怕热",
+                        desc: "对温度适应良好，四季没有明显的体感不适。",
+                        scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+                    }
+                ]
+            },
+            {
+                text: "2. 早起观察自己的舌苔，更接近哪种？",
+                subtext: "刷牙前对着镜子看一眼，不用刻意去刮舌苔。",
+                options: [
+                    {
+                        text: "舌苔发白、偏厚",
+                        desc: "舌体可能有点胖大，边缘有齿痕，舌苔像一层白霜。",
+                        scores: { "阳虚质": 3, "阴虚质": 0, "气滞质": 1, "湿热质": 0, "平和质": 0 }
+                    },
+                    {
+                        text: "舌苔发黄、腻浊",
+                        desc: "舌苔颜色偏黄，感觉嘴里黏腻，有时会觉得口苦、口臭。",
+                        scores: { "阳虚质": 0, "阴虚质": 1, "气滞质": 1, "湿热质": 3, "平和质": 0 }
+                    },
+                    {
+                        text: "舌头很红，几乎没有舌苔",
+                        desc: "舌苔很薄，或者一块块剥落，嘴里经常容易干、甚至起溃疡。",
+                        scores: { "阳虚质": 0, "阴虚质": 3, "气滞质": 0, "湿热质": 1, "平和质": 0 }
+                    },
+                    {
+                        text: "淡红舌，薄白苔",
+                        desc: "舌头颜色粉红润泽，上面有一层薄薄的干湿适中的白苔。",
+                        scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+                    }
+                ]
+            },
+            {
+                text: "3. 过去一个月内，你的整体精神状态更像？",
+                subtext: "指身体和心理的综合精力和活力体验。",
+                options: [
+                    {
+                        text: "容易劳累，懒得动弹",
+                        desc: "稍微运动或工作就觉得累，说话声音懒洋洋的，提不起劲。",
+                        scores: { "阳虚质": 3, "阴虚质": 1, "气滞质": 1, "湿热质": 1, "平和质": 0 }
+                    },
+                    {
+                        text: "经常烦躁，容易叹气发火",
+                        desc: "压力大，情绪莫名觉得憋闷，经常叹气，胸口感觉堵得慌。",
+                        scores: { "阳虚质": 0, "阴虚质": 1, "气滞质": 3, "湿热质": 1, "平和质": 0 }
+                    },
+                    {
+                        text: "精力还不错，情绪相对稳定",
+                        desc: "没有长期的难以缓解的疲劳感，日常情绪可以自我调节。",
+                        scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+                    }
+                ]
+            },
+            {
+                text: "4. 你的胃口、消化和排便情况如何？",
+                subtext: "脾胃为后天之本，消化往往最能反映问题。",
+                options: [
+                    {
+                        text: "吃凉的或者油腻就容易拉肚子",
+                        desc: "肚子经常冷痛，喜欢用手捂着，大便不成形，容易稀溏。",
+                        scores: { "阳虚质": 3, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 }
+                    },
+                    {
+                        text: "经常肚子胀气，呃逆嗳气",
+                        desc: "饭后或者生气时肚子特别胀，打个嗝、排个气会舒服很多。",
+                        scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 3, "湿热质": 1, "平和质": 0 }
+                    },
+                    {
+                        text: "大便黏滞，小便发黄",
+                        desc: "上完厕所马桶很难冲干净，大便粘稠不爽快，小便颜色偏深。",
+                        scores: { "阳虚质": 0, "阴虚质": 1, "气滞质": 1, "湿热质": 3, "平和质": 0 }
+                    },
+                    {
+                        text: "饮食正常，排便规律通畅",
+                        desc: "胃口好，消化快，排便基本一天一次，定时且成形。",
+                        scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+                    }
+                ]
+            },
+            {
+                text: "5. 你的日常睡眠质量属于哪一种？",
+                subtext: "睡眠质量是身体阴阳交泰的重要气象表。",
+                options: [
+                    {
+                        text: "入睡困难，或者夜间极易醒来",
+                        desc: "躺下翻来覆去睡不着，手脚心发热心烦，或者凌晨固定时间醒来。",
+                        scores: { "阳虚质": 0, "阴虚质": 3, "气滞质": 2, "湿热质": 1, "平和质": 0 }
+                    },
+                    {
+                        text: "白天总犯困，怎么睡都不够",
+                        desc: "晚上睡很久白天依然头脑昏沉，像裹了块湿毛巾，身体沉重。",
+                        scores: { "阳虚质": 2, "阴虚质": 0, "气滞质": 0, "湿热质": 3, "平和质": 0 }
+                    },
+                    {
+                        text: "睡眠挺规律，入睡快且沉",
+                        desc: "一般半小时内能入睡，夜间不常醒，醒后感觉精力得到了恢复。",
+                        scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+                    }
+                ]
+            }
+        ];
+
+        var results = {
+            "阳虚质": {
+                title: "阳虚质",
+                subtitle: "体内小太阳电力不足，失于温煦",
+                description: "阳气是身体的「小太阳」。阳虚就像太阳偷了懒，火力不够。所以你常常会比别人更怕冷、手脚冰凉，精神也容易感到萎靡。",
+                symptoms: ["畏寒怕冷，四肢不温", "大便稀溏，吃生冷易腹泻", "精神萎靡，面色晃白", "舌淡胖，苔白滑"],
+                advice: ["饮食严禁冰凉、生冷，多食生姜、韭菜、牛羊肉等温性食物。", "动则生阳，建议多在日光下散步、打八段锦，重点多晒后背。", "每晚可用热水泡脚，水温40-42°C，泡至身体微微出汗即可。"]
+            },
+            "阴虚质": {
+                title: "阴虚质",
+                subtitle: "体内津液亏损，虚热内生",
+                description: "阴液就像身体里的「冷却水」。阴虚意味着身体的水分和滋润物质不足，导致制约不住火气，形成了「虚火」。",
+                symptoms: ["手足心热（五心烦热）", "口燥咽干，喜冷饮", "形体消瘦，大便干燥", "舌红少苔，或有裂纹"],
+                advice: ["忌食辛辣、油炸、燥热食物，多食银耳、百合、秋梨、黑芝麻等滋润之品。", "坚决避免熬夜！11点前入睡是滋阴最核心、最低成本的办法。"]
+            },
+            "气滞质": {
+                title: "气滞质",
+                subtitle: "气机运行不畅，肝气郁结",
+                description: "气就像身体里的「物流系统」，肝则是物流总指挥。气滞的人，体内气机由于情绪或压力卡住了。",
+                symptoms: ["胸胁胀满，喜欢长叹气", "常有咽喉异物感（梅核气）", "情绪郁闷或焦虑易怒", "胃脘胀痛，随情绪波动波动"],
+                advice: ["少吃土豆、红薯、豆类等易胀气食物，可多用玫瑰花、陈皮、薄荷泡茶喝。", "注重有氧运动，如慢跑、游泳、八段锦的「双手托天理三焦」"]
+            },
+            "湿热质": {
+                title: "湿热质",
+                subtitle: "湿热交蒸，如处于夏日桑拿天",
+                description: "湿热就像是身体里起了「桑拿天」，又湿又热，黏黏糊糊。这导致你容易面部出油、长痘，口苦口臭。",
+                symptoms: ["面部油光，易生痤疮、湿疹", "口苦口臭，舌苔黄腻", "大便黏滞不爽，马桶难冲", "小便短赤，身体沉重"],
+                advice: ["严格戒烟限酒，少吃麻辣火锅、烧烤、甜食、奶油等高油高糖高辛辣食物。", "不宜在烈日潮湿环境中长期运动，可选择清晨或傍晚进行可以出汗的运动。"]
+            },
+            "平和质": {
+                title: "平和质",
+                subtitle: "阴阳平衡，脏腑气血和调",
+                description: "恭喜你！你属于极为健康的平和体质。体内阴阳平衡，脏腑功能运转良好，气血充足。",
+                symptoms: ["精力充沛，不易疲劳", "睡眠安稳，胃口良好", "面色润泽，目光有神", "舌色淡红，苔薄白"],
+                advice: ["保持现有的规律作息，不熬夜，饮食荤素均衡，不暴饮暴食。", "维持适度的体育锻炼，如跑步、瑜伽、羽毛球等，使气血保持长久活络。"]
+            }
+        };
+
+        // ===== 状态 =====
+        var currentQuestionIndex = 0;
+        var userScores = { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 };
+
+        // ===== 初始化 =====
+        function initQuiz() {
+            document.getElementById("main-title").innerHTML = "中医体质自测";
+            document.getElementById("main-subtitle").innerHTML = "5个问题，帮你找到调理方向";
+            
+            var container = document.getElementById("quiz-container");
+            container.innerHTML = "";
+
+            for (var i = 0; i < questions.length; i++) {
+                var q = questions[i];
+                var quizBox = document.createElement("div");
+                quizBox.className = "quiz-box" + (i === 0 ? " active" : "");
+                quizBox.id = "question-" + i;
+
+                var optionsHtml = "";
+                for (var j = 0; j < q.options.length; j++) {
+                    var opt = q.options[j];
+                    optionsHtml = optionsHtml + 
+                        "<div class=\"option-card\" onclick=\"selectOption(" + i + ", " + j + ")\">" +
+                            "<h3>" + opt.text + "</h3>" +
+                            "<p>" + opt.desc + "</p>" +
+                        "</div>";
+                }
+
+                quizBox.innerHTML = 
+                    "<div class=\"question-title\">" + q.text + "</div>" +
+                    "<div class=\"question-sub\">" + q.subtext + "</div>" +
+                    "<div>" + optionsHtml + "</div>";
+                container.appendChild(quizBox);
+            }
+        }
+
+        // ===== 选择选项 =====
+        function selectOption(qIdx, optIdx) {
+            var selectedOption = questions[qIdx].options[optIdx];
+            var scores = selectedOption.scores;
+            
+            for (var constitution in scores) {
+                userScores[constitution] = userScores[constitution] + scores[constitution];
+            }
+            
+            document.getElementById("question-" + qIdx).classList.remove("active");
+            currentQuestionIndex = currentQuestionIndex + 1;
+            
+            if (currentQuestionIndex < questions.length) {
+                document.getElementById("question-" + currentQuestionIndex).classList.add("active");
+            } else {
+                calculateAndRenderResult();
+            }
+        }
+
+        // ===== 计算结果并渲染 =====
+        function calculateAndRenderResult() {
+            document.getElementById("quiz-container").style.display = "none";
+            
+            // 找出分数最高的体质
+            var keys = ["阳虚质", "阴虚质", "气滞质", "湿热质", "平和质"];
+            var finalConstitution = keys[0];
+            for (var i = 1; i < keys.length; i++) {
+                if (userScores[keys[i]] > userScores[finalConstitution]) {
+                    finalConstitution = keys[i];
+                }
+            }
+            
+            // 平和质特判
+            if (userScores["平和质"] >= 6 || (userScores[finalConstitution] === userScores["平和质"] && userScores[finalConstitution] < 5)) {
+                finalConstitution = "平和质";
+            }
+            
+            var data = results[finalConstitution];
+            
+            // 渲染结果
+            document.getElementById("res-title").innerHTML = data.title;
+            
+            var html = "<strong>" + data.subtitle + "</strong><br><br>" + data.description + "<br><br><strong>典型表现：</strong>";
+            for (var i = 0; i < data.symptoms.length; i++) {
+                html = html + "<br>• " + data.symptoms[i];
+            }
+            
+            html = html + "<br><br><strong>调理建议：</strong>";
+            for (var i = 0; i < data.advice.length; i++) {
+                html = html + "<br>• " + data.advice[i];
+            }
+            
+            document.getElementById("res-desc").innerHTML = html;
+            
+            document.getElementById("result-container").classList.add("active");
+        }
+
+        // ===== 重新开始 =====
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            for (var k in userScores) {
+                userScores[k] = 0;
+            }
+            
+            document.getElementById("result-container").classList.remove("active");
+            document.getElementById("quiz-container").style.display = "block";
+            document.getElementById("question-0").classList.add("active");
+        }
+
+        // ===== 立即执行，不等待 onload =====
+        initQuiz();
+    </script>
+</body>
+</html>
