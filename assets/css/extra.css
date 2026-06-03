@@ -1,0 +1,147 @@
+/* ============================================
+   tcm-self-learning 中医风格自定义样式
+   基于 Material for MkDocs 主题定制
+   配色：朱砂红 + 药草绿（中医特色）
+   ============================================ */
+
+:root {
+  /* 中医特色配色变量 */
+  --md-primary-fg-color: #8B0000;        /* 朱砂红 */
+  --md-accent-fg-color: #2E8B57;         /* 药草绿 */
+  --tcm-red: #8B0000;
+  --tcm-green: #2E8B57;
+  --tcm-gold: #DAA520;                    /* 药菊黄 */
+  --tcm-brown: #654321;                   /* 药丸棕 */
+  --tcm-bg: #FDFBF7;                     /* 宣纸色背景 */
+}
+
+/* ---- 全局背景微调（浅宣纸色，护眼）---- */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #FDFBF7;
+}
+
+/* ---- 标题样式 ---- */
+.md-typeset h1 {
+  font-weight: 700;
+  color: var(--tcm-red);
+  border-bottom: 2px solid var(--tcm-gold);
+  padding-bottom: 0.4em;
+}
+
+.md-typeset h2 {
+  color: var(--tcm-red);
+  border-left: 4px solid var(--tcm-red);
+  padding-left: 0.6em;
+}
+
+.md-typeset h3 {
+  color: var(--tcm-green);
+}
+
+/* ---- 引言块（中医名言）自定义 ---- */
+.md-typeset blockquote {
+  border-left: 4px solid var(--tcm-gold);
+  background-color: rgba(218, 165, 32, 0.08);
+  border-radius: 4px;
+  padding: 0.8em 1.2em;
+  font-style: italic;
+  color: #5a4a1a;
+}
+
+/* ---- Admonition 颜色定制 ---- */
+.md-typeset .admonition.tip {
+  border-color: var(--tcm-green);
+}
+.md-typeset .admonition.tip > .admonition-title {
+  background-color: rgba(46, 139, 87, 0.1);
+}
+.md-typeset .admonition.tip > .admonition-title::before {
+  background-color: var(--tcm-green);
+}
+
+.md-typeset .admonition.info {
+  border-color: var(--tcm-red);
+}
+.md-typeset .admonition.info > .admonition-title {
+  background-color: rgba(139, 0, 0, 0.1);
+}
+.md-typeset .admonition.info > .admonition-title::before {
+  background-color: var(--tcm-red);
+}
+
+/* ---- 表格样式优化 ---- */
+.md-typeset table:not([class]) th {
+  background-color: var(--tcm-red);
+  color: white;
+  font-weight: 600;
+}
+
+.md-typeset table:not([class]) tr:nth-child(2n) {
+  background-color: rgba(139, 0, 0, 0.04);
+}
+
+/* ---- 代码块样式 ---- */
+.md-typeset .highlight {
+  border-radius: 6px;
+}
+
+/* ---- 徽章/标签样式 ---- */
+.md-typeset .md-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.md-typeset .md-badge--primary {
+  background-color: rgba(139, 0, 0, 0.12);
+  color: var(--tcm-red);
+}
+.md-typeset .md-badge--accent {
+  background-color: rgba(46, 139, 87, 0.12);
+  color: var(--tcm-green);
+}
+.md-typeset .md-badge--success {
+  background-color: rgba(46, 139, 87, 0.15);
+  color: var(--tcm-green);
+}
+
+/* ---- 首页 Hero 区域 ---- */
+.tcm-hero {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  background: linear-gradient(135deg, rgba(139,0,0,0.06), rgba(46,139,87,0.06));
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+.tcm-hero h1 {
+  color: var(--tcm-red);
+  font-size: 2.4rem;
+  margin-bottom: 0.6rem;
+}
+.tcm-hero p {
+  color: #555;
+  font-size: 1.1rem;
+}
+
+/* ---- 导航栏微调 ---- */
+.md-header {
+  background-color: var(--tcm-red) !important;
+}
+
+/* ---- 页脚 ---- */
+.md-footer {
+  background-color: #f5f0e8;
+  color: #666;
+}
+
+/* ---- 移动端适配 ---- */
+@media screen and (max-width: 768px) {
+  .tcm-hero h1 {
+    font-size: 1.8rem;
+  }
+  .md-typeset h1 {
+    font-size: 1.6rem;
+  }
+}
