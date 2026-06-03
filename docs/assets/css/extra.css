@@ -144,4 +144,24 @@
   .md-typeset h1 {
     font-size: 1.6rem;
   }
+  .md-typeset h2 {
+    font-size: 1.4rem;
+  }
+  .md-typeset h3 {
+    font-size: 1.2rem;
+  }
+  /* 表格横向滚动 */
+  .md-typeset table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+  }
+  /* 代码块优化 */
+  .md-typeset .highlight {
+    font-size: 0.85em;
+  }
+  /* 广告块（admonition）优化 */
+  .md-typeset .admonition {
+    font-size: 0.95em;
+  }
 }

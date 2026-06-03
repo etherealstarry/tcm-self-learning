@@ -48,7 +48,7 @@ extra:
       link: https://github.com/etherealstarry
       name: EtherealStarry on GitHub
   analytics:
-    provider: false
+    provider: false  # 暂时禁用 Google Analytics，需要时再配置
 
 extra_css:
   - assets/css/extra.css
