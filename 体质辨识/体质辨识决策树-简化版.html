@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中医体质自测 - 简化版</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #FAF8F5;
+            color: #3C3A36;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 680px;
+            margin: 40px auto;
+            background: white;
+            border: 1px solid #E6E1DA;
+            border-radius: 12px;
+            padding: 40px 30px;
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .header p { font-size: 14px; color: #7A746B; }
+        
+        .question { display: none; }
+        .question.active { display: block; animation: fadeIn 0.4s ease; }
+        .question h2 { font-size: 18px; margin-bottom: 6px; }
+        .question .subtitle { font-size: 13px; color: #7A746B; margin-bottom: 24px; }
+        
+        .options { display: grid; gap: 16px; }
+        .option {
+            border: 1px solid #E6E1DA;
+            border-radius: 12px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .option:hover {
+            border-color: #8EA89D;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .option h3 { font-size: 15px; margin-bottom: 4px; }
+        .option p { font-size: 13px; color: #7A746B; }
+        
+        .result { display: none; }
+        .result.active { display: block; animation: fadeIn 0.5s ease; }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #8EA89D;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover { opacity: 0.9; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>中医体质自测</h1>
+            <p>5个问题，帮你找到调理方向</p>
+        </div>
+        
+        <div id="q1" class="question active">
+            <h2>1. 你平时更怕冷还是怕热？</h2>
+            <p class="subtitle">想象在一个开着标准空调的房间里，你的真实感受是？</p>
+            <div class="options">
+                <div class="option" onclick="answer(1, 'cold')">
+                    <h3>怕冷，喜欢温暖</h3>
+                    <p>手脚容易冰凉，总想喝温热水，吃凉的心里不舒服。</p>
+                </div>
+                <div class="option" onclick="answer(1, 'hot')">
+                    <h3>怕热，喜欢凉爽</h3>
+                    <p>体热容易出汗，喜欢喝冰饮，容易觉得心里燥热。</p>
+                </div>
+                <div class="option" onclick="answer(1, 'neutral')">
+                    <h3>不特别怕冷，也不特别怕热</h3>
+                    <p>对温度适应良好，四季没有明显的体感不适。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="q2" class="question">
+            <h2>2. 早起观察自己的舌苔，更接近哪种？</h2>
+            <p class="subtitle">刷牙前对着镜子看一眼，不用刻意去刮舌苔。</p>
+            <div class="options">
+                <div class="option" onclick="answer(2, 'white')">
+                    <h3>舌苔发白、偏厚</h3>
+                    <p>舌体可能有点胖大，边缘有齿痕，舌苔像一层白霜。</p>
+                </div>
+                <div class="option" onclick="answer(2, 'yellow')">
+                    <h3>舌苔发黄、腻浊</h3>
+                    <p>舌苔颜色偏黄，感觉嘴里黏腻，有时会觉得口苦、口臭。</p>
+                </div>
+                <div class="option" onclick="answer(2, 'red')">
+                    <h3>舌头很红，几乎没有舌苔</h3>
+                    <p>舌苔很薄，或者一块块剥落，嘴里经常容易干、甚至起溃疡。</p>
+                </div>
+                <div class="option" onclick="answer(2, 'normal')">
+                    <h3>淡红舌，薄白苔</h3>
+                    <p>舌头颜色粉红润泽，上面有一层薄薄的干湿适中的白苔。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="q3" class="question">
+            <h2>3. 过去一个月内，你的整体精神状态更像？</h2>
+            <p class="subtitle">指身体和心理的综合精力和活力体验。</p>
+            <div class="options">
+                <div class="option" onclick="answer(3, 'tired')">
+                    <h3>容易劳累，懒得动弹</h3>
+                    <p>稍微运动或工作就觉得累，说话声音懒洋洋的，提不起劲。</p>
+                </div>
+                <div class="option" onclick="answer(3, 'irritable')">
+                    <h3>经常烦躁，容易叹气发火</h3>
+                    <p>压力大，情绪莫名觉得憋闷，经常叹气，胸口感觉堵得慌。</p>
+                </div>
+                <div class="option" onclick="answer(3, 'ok')">
+                    <h3>精力还不错，情绪相对稳定</h3>
+                    <p>没有长期的难以缓解的疲劳感，日常情绪可以自我调节。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="q4" class="question">
+            <h2>4. 你的胃口、消化和排便情况如何？</h2>
+            <p class="subtitle">脾胃为后天之本，消化往往最能反映问题。</p>
+            <div class="options">
+                <div class="option" onclick="answer(4, 'cold')">
+                    <h3>吃凉的或者油腻就容易拉肚子</h3>
+                    <p>肚子经常冷痛，喜欢用手捂着，大便不成形，容易稀溏。</p>
+                </div>
+                <div class="option" onclick="answer(4, 'bloat')">
+                    <h3>经常肚子胀气，呃逆嗳气</h3>
+                    <p>饭后或者生气时肚子特别胀，打个嗝、排个气会舒服很多。</p>
+                </div>
+                <div class="option" onclick="answer(4, 'sticky')">
+                    <h3>大便黏滞，小便发黄</h3>
+                    <p>上完厕所马桶很难冲干净，大便粘稠不爽快，小便颜色偏深。</p>
+                </div>
+                <div class="option" onclick="answer(4, 'normal')">
+                    <h3>饮食正常，排便规律通畅</h3>
+                    <p>胃口好，消化快，排便基本一天一次，定时且成形。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="q5" class="question">
+            <h2>5. 你的日常睡眠质量属于哪一种？</h2>
+            <p class="subtitle">睡眠质量是身体阴阳交泰的重要气象表。</p>
+            <div class="options">
+                <div class="option" onclick="answer(5, 'insomnia')">
+                    <h3>入睡困难，或者夜间极易醒来</h3>
+                    <p>躺下翻来覆去睡不着，手脚心发热心烦，或者凌晨固定时间醒来。</p>
+                </div>
+                <div class="option" onclick="answer(5, 'sleepy')">
+                    <h3>白天总犯困，怎么睡都不够</h3>
+                    <p>晚上睡很久白天依然头脑昏沉，像裹了块湿毛巾，身体沉重。</p>
+                </div>
+                <div class="option" onclick="answer(5, 'good')">
+                    <h3>睡眠挺规律，入睡快且沉</h3>
+                    <p>一般半小时内能入睡，夜间不常醒，醒后感觉精力得到了恢复。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="result" class="result">
+            <h2 id="result-title">计算结果...</h2>
+            <p id="result-desc"></p>
+            <button class="btn" onclick="restart()">重新测评</button>
+        </div>
+    </div>
+    
+    <script>
+        const scores = { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 };
+        
+        function answer(qNum, answer) {
+            // 计分逻辑（简化版）
+            if (qNum === 1) {
+                if (answer === 'cold') scores["阳虚质"] += 3;
+                if (answer === 'hot') { scores["阴虚质"] += 3; scores["湿热质"] += 2; }
+                if (answer === 'neutral') scores["平和质"] += 3;
+            }
+            if (qNum === 2) {
+                if (answer === 'white') scores["阳虚质"] += 3;
+                if (answer === 'yellow') scores["湿热质"] += 3;
+                if (answer === 'red') scores["阴虚质"] += 3;
+                if (answer === 'normal') scores["平和质"] += 3;
+            }
+            if (qNum === 3) {
+                if (answer === 'tired') scores["阳虚质"] += 3;
+                if (answer === 'iritable') scores["气滞质"] += 3;
+                if (answer === 'ok') scores["平和质"] += 3;
+            }
+            if (qNum === 4) {
+                if (answer === 'cold') scores["阳虚质"] += 3;
+                if (answer === 'bloat') scores["气滞质"] += 3;
+                if (answer === 'sticky') scores["湿热质"] += 3;
+                if (answer === 'normal') scores["平和质"] += 3;
+            }
+            if (qNum === 5) {
+                if (answer === 'insomnia') { scores["阴虚质"] += 3; scores["气滞质"] += 2; }
+                if (answer === 'sleepy') { scores["阳虚质"] += 2; scores["湿热质"] += 3; }
+                if (answer === 'good') scores["平和质"] += 3;
+            }
+            
+            // 隐藏当前问题
+            document.getElementById('q' + qNum).classList.remove('active');
+            
+            if (qNum < 5) {
+                // 显示下一个问题
+                document.getElementById('q' + (qNum + 1)).classList.add('active');
+            } else {
+                // 显示结果
+                showResult();
+            }
+        }
+        
+        function showResult() {
+            // 找出分数最高的体质
+            let maxScore = 0;
+            let result = "平和质";
+            for (const [constitution, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    result = constitution;
+                }
+            }
+            
+            // 如果平和质分数最高，或者最高分太低，判定为平和质
+            if (scores["平和质"] >= 6 || maxScore < 5) {
+                result = "平和质";
+            }
+            
+            // 显示结果
+            document.getElementById('result-title').innerText = "你的体质是：" + result;
+            document.getElementById('result-desc').innerText = getDescription(result);
+            document.getElementById('result').classList.add('active');
+        }
+        
+        function getDescription(constitution) {
+            const desc = {
+                "阳虚质": "阳气不足，怕冷，手脚冰凉，精神萎靡。建议多吃温性食物，适当运动，艾灸足三里、关元等穴位。",
+                "阴虚质": "阴液亏损，怕热，手脚心发热，失眠多梦。建议忌食辛辣燥热食物，避免熬夜，按揉三阴交、太溪等穴位。",
+                "气滞质": "肝气郁结，情绪郁闷，容易叹气发火，胃胀嗳气。建议少吃胀气食物，多运动舒展，按揉太冲、内关等穴位。",
+                "湿热质": "湿热内蕴，面部出油，口苦口臭，大便黏滞。建议少吃辛辣油腻，多吃利湿食物，按揉阴陵泉、曲池等穴位。",
+                "平和质": "恭喜你！阴阳平衡，精力充沛，睡眠安稳。继续保持健康的生活方式即可。建议每周按揉足三里保健。"
+            };
+            return desc[constitution] || "未知体质";
+        }
+        
+        function restart() {
+            // 重置分数
+            for (const k in scores) scores[k] = 0;
+            
+            // 隐藏结果，显示第一个问题
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('q1').classList.add('active');
+        }
+    </script>
+</body>
+</html>
