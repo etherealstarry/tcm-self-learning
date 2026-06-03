@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中医自学网 - 体质辨识决策树</title>
+    <style>
+        /* 新中式现代极简风格样式表 */
+        :root {
+            --bg-color: #FAF8F5;       /* 柔和宣纸色背景 */
+            --card-bg: #FFFFFF;
+            --text-main: #3C3A36;      /* 熟褐黑，拒绝纯黑死板 */
+            --text-sub: #7A746B;
+            --border-color: #E6E1DA;
+            --primary-color: #8EA89D;   /* 默认温润竹青色 */
+            --primary-light: #EBF0EE;
+            --shadow: 0 8px 24px rgba(60, 58, 54, 0.05);
+            --radius: 12px;
+        }
+
+        /* 动态主题类 - 动态唤醒视觉 */
+        .theme-yangxu { --primary-color: #FF6B6B; --primary-light: #FFEBEB; }
+        .theme-yinxu { --primary-color: #4ECDC4; --primary-light: #EBF9F8; }
+        .theme-qizhi { --primary-color: #FFB400; --primary-light: #FFF7E6; }
+        .theme-shire { --primary-color: #9B5DE5; --primary-light: #F5EEFC; }
+        .theme-pinghe { --primary-color: #8EA89D; --primary-light: #EBF0EE; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans CJK SC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+            transition: background-color 0.4s ease;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 40px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 顶部欢迎区 */
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); letter-spacing: 1px; }
+        .header p { font-size: 14px; color: var(--text-sub); }
+
+        /* 进度条 */
+        .progress-container { width: 100%; height: 4px; background: var(--border-color); border-radius: 2px; margin-bottom: 40px; position: relative; }
+        .progress-bar { height: 100%; background: var(--primary-color); width: 0%; border-radius: 2px; transition: width 0.3s ease, background-color 0.4s ease; }
+
+        /* 问题区块动画 */
+        .quiz-box { display: none; animation: fadeIn 0.4s ease forwards; }
+        .quiz-box.active { display: block; }
+
+        .question-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+        .question-sub { font-size: 13px; color: var(--text-sub); margin-bottom: 24px; }
+
+        /* 2.5D 新中式卡片选项 */
+        .options-list { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .option-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            /* 轻微倾斜投影，营造2.5D卡片层级感 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+        .option-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.03), 0 2px 4px var(--primary-light);
+        }
+        .option-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+        .option-card p { font-size: 13px; color: var(--text-sub); line-height: 1.4; }
+
+        /* 结果展示区 */
+        .result-box { display: none; animation: fadeIn 0.5s ease forwards; }
+        .result-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; background: var(--primary-light); color: var(--primary-color); font-weight: 600; font-size: 14px; margin-bottom: 12px; transition: all 0.4s ease;}
+        .result-title { font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+        .result-desc { font-size: 15px; color: var(--text-main); margin-bottom: 30px; background: #FDFDFD; padding: 16px; border-radius: 8px; border-left: 3px solid var(--primary-color); }
+
+        .section-title { font-size: 16px; font-weight: 600; margin: 24px 0 12px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; color: var(--text-main); }
+        
+        /* 症状标签 */
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .tag { background: #F4F3F0; color: var(--text-main); padding: 5px 12px; border-radius: 6px; font-size: 13px; border: 1px solid var(--border-color); }
+
+        /* 穴位方剂卡片设计 */
+        .item-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        .item-card {
+            background: #FAFAFA; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s ease;
+        }
+        .item-card:hover { border-color: var(--primary-color); background: #FFF; transform: scale(1.01); }
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .item-name { font-weight: 600; font-size: 15px; color: var(--text-main); }
+        .item-meta { font-size: 12px; color: var(--primary-color); background: var(--primary-light); padding: 2px 8px; border-radius: 4px; }
+        .item-text { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; }
+
+        /* 循证与安全警告框样式 */
+        .warning-box { background: #FFF9E6; border-left: 4px solid #FFB400; padding: 14px 18px; margin: 24px 0; border-radius: 4px; display: flex; gap: 12px; align-items: flex-start; }
+        .warning-icon { font-size: 18px; line-height: 1; }
+        .warning-content strong { font-size: 14px; color: #B37D00; display: block; margin-bottom: 4px; }
+        .warning-content p { font-size: 12px; color: #7A6533; line-height: 1.5; }
+
+        /* 抽屉弹窗 (Drawer/Modal) */
+        .drawer-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); display:none; z-index:100; opacity:0; transition: opacity 0.3s ease; }
+        .drawer { position: fixed; bottom:0; left:0; width:100%; max-height: 75%; background:#FFF; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 30px; z-index:101; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 -10px 30px rgba(0,0,0,0.08); overflow-y: auto; }
+        
+        .drawer-overlay.open { display: block; opacity: 1; }
+        .drawer.open { transform: translateY(0); }
+        .drawer-close { position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-sub); }
+
+        .btn-restart { display: block; width: 100%; text-align: center; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 35px; transition: opacity 0.2s; }
+        .btn-restart:hover { opacity: 0.9; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body id="body-root">
+
+<div class="container">
+    <div class="header">
+        <h1 id="main-title">中医体质自测</h1>
+        <p id="main-subtitle">正在加载数据树...</p>
+    </div>
+
+    <!-- 顶置进度条 -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+
+    <!-- 问题动态注入锚点 -->
+    <div id="quiz-container"></div>
+
+    <!-- 结果展示锚点 -->
+    <div id="result-container" class="result-box">
+        <div class="result-badge" id="res-badge">体质分析</div>
+        <h2 class="result-title" id="res-title">正在计算...</h2>
+        <div class="result-desc" id="res-desc"></div>
+
+        <div class="section-title">典型表现</div>
+        <div class="tag-list" id="res-symptoms"></div>
+
+        <div class="section-title">推荐穴位调理 (点击看手绘定位与手法)</div>
+        <div class="item-grid" id="res-acupoints"></div>
+
+        <div id="formula-section" style="display:none;">
+            <div class="section-title">经方参考 (自学研究)</div>
+            <div class="item-grid" id="res-formulas"></div>
+        </div>
+
+        <div class="section-title">生活膳食指南</div>
+        <div class="tag-list" style="flex-direction: column; align-items: stretch;" id="res-lifestyle"></div>
+
+        <button class="btn-restart" onclick="restartQuiz()">重新测评</button>
+    </div>
+</div>
+
+<!-- 抽屉式侧边信息详情弹窗 -->
+<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+    <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+    <div id="drawer-content"></div>
+</div>
+
+<script>
+    // 直接内嵌刚刚定稿打磨好的高价值中医学JSON库
+    const quizData = {
+  "title": "中医体质自测",
+  "subtitle": "5个日常问题，帮你找到专属调理方向",
+  "description": "本测试基于中医八纲辨证与体质学说，通过日常生活的状态推导，帮您找到调理的抓手。结果仅供自学参考，不作为临床医疗诊断依据。",
+  "questions": [
+    {
+      "id": "q1",
+      "text": "1. 你平时更怕冷还是怕热？",
+      "subtext": "想象在一个开着标准空调的房间里，你的真实感受是？",
+      "options": [
+        {
+          "text": "怕冷，喜欢温暖",
+          "desc": "手脚容易冰凉，总想喝温热水，吃凉的心里不舒服。",
+          "scores": { "阳虚质": 3, "阴虚质": 0, "气滞质": 1, "湿热质": 0, "平和质": 0 }
+        },
+        {
+          "text": "怕热，喜欢凉爽",
+          "desc": "体热容易出汗，喜欢喝冰饮，容易觉得心里燥热。",
+          "scores": { "阳虚质": 0, "阴虚质": 3, "气滞质": 0, "湿热质": 2, "平和质": 0 }
+        },
+        {
+          "text": "不特别怕冷，也不特别怕热",
+          "desc": "对温度适应良好，四季没有明显的体感不适。",
+          "scores": { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "2. 早起观察自己的舌苔，更接近哪种？",
+      "subtext": "刷牙前对着镜子看一眼，不用刻意去刮舌苔。",
+      "options": [
+        {
+          "text": "舌苔发白、偏厚",
+          "desc": "舌体可能有点胖大，边缘有齿痕，舌苔像一层白霜。",
+          "scores": { "阳虚质": 3, "阴虚质": 0, "气滞质": 1, "湿热质": 0, "平和质": 0 }
+        },
+        {
+          "text": "舌苔发黄、腻浊",
+          "desc": "舌苔颜色偏黄，感觉嘴里黏腻，有时会觉得口苦、口臭。",
+          "scores": { "阳虚质": 0, "阴虚质": 1, "气滞质": 1, "湿热质": 3, "平和质": 0 }
+        },
+        {
+          "text": "舌头很红，几乎没有舌苔",
+          "desc": "舌苔很薄，或者一块块剥落，嘴里经常容易干、甚至起溃疡。",
+          "scores": { "阳虚质": 0, "阴虚质": 3, "气滞质": 0, "湿热质": 1, "平和质": 0 }
+        },
+        {
+          "text": "淡红舌，薄白苔",
+          "desc": "舌头颜色粉红润泽，上面有一层薄薄的干湿适中的白苔。",
+          "scores": { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "3. 过去一个月内，你的整体精神状态更像？",
+      "subtext": "指身体和心理的综合精力和活力体验。",
+      "options": [
+        {
+          "text": "容易劳累，懒得动弹",
+          "desc": "稍微运动或工作就觉得累，说话声音懒洋洋的，提不起劲。",
+          "scores": { "阳虚质": 3, "阴虚质": 1, "气滞质": 1, "湿热质": 1, "平和质": 0 }
+        },
+        {
+          "text": "经常烦躁，容易叹气发火",
+          "desc": "压力大，情绪莫名觉得憋闷，经常叹气，胸口感觉堵得慌。",
+          "scores": { "阳虚质": 0, "阴虚质": 1, "气滞质": 3, "湿热质": 1, "平和质": 0 }
+        },
+        {
+          "text": "精力还不错，情绪相对稳定",
+          "desc": "没有长期的难以缓解的疲劳感，日常情绪可以自我调节。",
+          "scores": { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+        }
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "4. 你的胃口、消化和排便情况如何？",
+      "subtext": "脾胃为后天之本，消化往往最能反映问题。",
+      "options": [
+        {
+          "text": "吃凉的或者油腻就容易拉肚子",
+          "desc": "肚子经常冷痛，喜欢用手捂着，大便不成形，容易稀溏。",
+          "scores": { "阳虚质": 3, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 }
+        },
+        {
+          "text": "经常肚子胀气，呃逆嗳气",
+          "desc": "饭后或者生气时肚子特别胀，打个嗝、排个气会舒服很多。",
+          "scores": { "阳虚质": 0, "阴虚质": 0, "气滞质": 3, "湿热质": 1, "平和质": 0 }
+        },
+        {
+          "text": "大便黏滞，小便发黄",
+          "desc": "上完厕所马桶很难冲干净，大便粘稠不爽快，小便颜色偏深。",
+          "scores": { "阳虚质": 0, "阴虚质": 1, "气滞质": 1, "湿热质": 3, "平和质": 0 }
+        },
+        {
+          "text": "饮食正常，排便规律通畅",
+          "desc": "胃口好，消化快，排便基本一天一次，定时且成形。",
+          "scores": { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+        }
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "5. 你的日常睡眠质量属于哪一种？",
+      "subtext": "睡眠质量是身体阴阳交泰的重要气象表。",
+      "options": [
+        {
+          "text": "入睡困难，或者夜间极易醒来",
+          "desc": "躺下翻来覆去睡不着，手脚心发热心烦，或者凌晨固定时间醒来。",
+          "scores": { "阳虚质": 0, "阴虚质": 3, "气滞质": 2, "湿热质": 1, "平和质": 0 }
+        },
+        {
+          "text": "白天总犯困，怎么睡都不够",
+          "desc": "晚上睡很久白天依然头脑昏沉，像裹了块湿毛巾，身体沉重。",
+          "scores": { "阳虚质": 2, "阴虚质": 0, "气滞质": 0, "湿热质": 3, "平和质": 0 }
+        },
+        {
+          "text": "睡眠挺规律，入睡快且沉",
+          "desc": "一般半小时内能入睡，夜间不常醒，醒后感觉精力得到了恢复。",
+          "scores": { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }
+        }
+      ]
+    }
+  ],
+  "results": {
+    "阳虚质": {
+      "title": "阳虚质",
+      "subtitle": "体内小太阳电力不足，失于温煦",
+      "theme": "theme-yangxu",
+      "color": "#FF6B6B",
+      "description": "阳气是身体的"小太阳"。阳虚就像太阳偷了懒，火力不够。所以你常常会比别人更怕冷、手脚冰凉，精神也容易感到萎靡，脾胃由于缺乏温煦，吃冷食就容易抗议泄泻。",
+      "symptoms": ["畏寒怕冷，四肢不温", "大便稀溏，吃生冷易腹泻", "精神萎靡，面色㿠白", "舌淡胖，苔白滑"],
+      "acupoints": [
+        {
+          "name": "足三里",
+          "meridian": "足阳明胃经",
+          "location": "在小腿外侧，犊鼻下3寸（约四横指），胫骨前嵴外一横指处。",
+          "effect": "燥化脾湿，生发胃气，大补后天精微。",
+          "method": "每次用拇指节按揉100次，或使用艾条悬灸10-15分钟，至局部皮肤潮红。",
+          "special": "⭐ 后天保健第一要穴，虚寒体质的强壮剂。"
+        },
+        {
+          "name": "关元",
+          "meridian": "任脉",
+          "location": "在下腹部，前正中线上，当脐中下3寸（约四横指并拢）。",
+          "effect": "培元固本，回阳固脱，大补先天元气。",
+          "method": "可将双手搓热摩腹关元，或推荐进行温灸、艾灸15分钟，温通下焦。",
+          "special": "⭐ 虚寒、下焦元气不足者艾灸极佳（孕妇禁用）。"
+        },
+        {
+          "name": "命门",
+          "meridian": "督脉",
+          "location": "在腰部后正中线上，第2腰椎棘突下凹陷中（约与肚脐相对）。",
+          "effect": "接续督脉阳气，补肾壮阳，温煦全身。",
+          "method": "每日双手搓热后，快速上下摩擦后腰命门及两侧腰眼处，使其发热。",
+          "special": "🔥 董氏奇穴特效组合：灵骨穴 + 大白穴（手背虎口处，两穴倒马并用，具有极强的补气温阳散寒作用，适合配合此证调理）。"
+        }
+      ],
+      "formulas": [
+        {
+          "name": "理中丸",
+          "composition": "干姜、党参、白术、甘草",
+          "effect": "温中祛寒，补气健脾。",
+          "indication": "中焦虚寒，脘腹冷痛，喜温喜按，呕吐泄泻。"
+        },
+        {
+          "name": "四逆汤",
+          "composition": "熟附子、干姜、甘草",
+          "effect": "回阳救逆，温中散寒。",
+          "indication": "阳虚欲脱，冷汗自出，四肢厥逆，脉微欲绝。",
+          "warning": "方中附子有强心及拟交感神经作用，但生用或过量有大毒。中成药需严格遵医嘱，临床汤剂必须按法先煎1小时以上以降低毒性。"
+        }
+      ],
+      "lifestyle": [
+        "饮食严禁冰凉、生冷（如冰饮、西瓜、苦瓜、生鱼片等），多食生姜、韭菜、牛羊肉等温性食物。",
+        ""动则生阳"，建议多在日光下散步、打八段锦，重点多晒后背（督脉循行处）以吸收自然界阳气。",
+        "每晚可用热水泡脚，水温40-42°C，可在水中加入干姜、艾叶，泡至身体微微出汗即可，切忌大汗淋漓。"
+      ]
+    },
+    "阴虚质": {
+      "title": "阴虚质",
+      "subtitle": "体内津液亏损，虚热内生",
+      "theme": "theme-yinxu",
+      "color": "#4ECDC4",
+      "description": "阴液就像身体里的"冷却水"。阴虚意味着身体的水分和滋润物质不足，导致制约不住火气，形成了"虚火"。所以你容易手脚心发热、口干咽燥、夜间出汗且睡眠浅易醒。",
+      "symptoms": ["手足心热（五心烦热）", "口燥咽干，喜冷饮", "形体消瘦，大便干燥", "舌红少苔，或有裂纹"],
+      "acupoints": [
+        {
+          "name": "三阴交",
+          "meridian": "足太阴脾经",
+          "location": "在小腿内侧，足内踝尖上3寸（四横指），胫骨内侧缘后方凹陷处。",
+          "effect": "脾、肝、肾三经交会穴，具有极强的滋阴聪耳、养血活血作用。",
+          "method": "睡前用大拇指顺时针按揉100-200次，局部有酸胀感为佳。",
+          "special": "⚠️ 孕妇绝对禁用！具有催产下胎之性。"
+        },
+        {
+          "name": "太溪",
+          "meridian": "足少阴肾经",
+          "location": "在足内侧，内踝尖与跟腱之间的凹陷处。",
+          "effect": "肾经原穴，能滋阴补肾、清热生津、引火归元。",
+          "method": "用双手拇指点按并向内踝骨方向揉动，每次2-3分钟。",
+          "special": "⭐ 肾阴不足、虚火上炎（喉咙干痛、耳鸣）的特效保健穴。"
+        }
+      ],
+      "formulas": [
+        {
+          "name": "六味地黄丸",
+          "composition": "熟地黄、山茱萸、山药、泽泻、茯苓、牡丹皮",
+          "effect": "滋阴补肾（三补三泻）。",
+          "indication": "肾阴亏损，头晕耳鸣，腰膝酸软，骨蒸潮热，盗汗遗精。"
+        },
+        {
+          "name": "酸枣仁汤",
+          "composition": "酸枣仁、茯苓、知母、川芎、甘草",
+          "effect": "养血安神，清热除烦。",
+          "indication": "虚劳虚烦不得眠，心悸盗汗，头目眩晕，咽干口燥。",
+          "warning": "方中酸枣仁有收敛之性，外感发热或实火内炽、胃热泛酸者不宜盲目自行服用。"
+        }
+      ],
+      "lifestyle": [
+        "忌食辛辣、油炸、烟熏及燥热食物（如辣椒、花椒、羊肉、荔枝、炒花生等），多食银耳、百合、秋梨、黑芝麻等滋润之品。",
+        "坚决避免熬夜！中医认为"夜半子时养阴"，11点前入睡是滋阴最核心、最低成本的办法。",
+        "🔥 董氏奇穴特效提示：阴虚火旺导致咽喉不适、肠燥便秘时，可配合按揉董氏特定【肠门穴】（尺骨内侧，腕横纹上3寸处），有清热理肠、滋阴降火的良效。"
+      ]
+    },
+    "气滞质": {
+      "title": "气滞质",
+      "subtitle": "气机运行不畅，肝气郁结",
+      "theme": "theme-qizhi",
+      "color": "#FFB400",
+      "description": "气就像身体里的"物流系统"，肝则是物流总指挥。气滞的人，体内气机由于情绪或压力卡住了。你常觉得胸口憋闷、胃里胀气、喜欢叹气，情绪起伏往往直接牵动肠胃的不适。",
+      "symptoms": ["胸胁胀满，喜欢长叹气", "常有咽喉异物感（梅核气）", "情绪郁闷或焦虑易怒", "胃脘胀痛，随情绪波动波动"],
+      "acupoints": [
+        {
+          "name": "太冲",
+          "meridian": "足厥阴肝经",
+          "location": "在足背侧，当第1、2跖骨结合部之前的凹陷处。",
+          "effect": "肝经原穴，疏肝理气，解郁泄火。",
+          "method": "用大拇指从脚趾缝向脚背方向推揉，有明显胀痛感，每侧推揉2-3分钟。",
+          "special": "⭐ 疏解心理压力、生气后消气的"消气穴"。"
+        },
+        {
+          "name": "内关",
+          "meridian": "手厥阴心包经",
+          "location": "在前臂掌侧，当大陵（腕横纹）上2寸，掌长肌腱与桡侧腕屈肌腱之间。",
+          "effect": "宁心安神，理气宽胸，和胃止呕。",
+          "method": "用另一手大拇指垂直按压，配合深呼吸，每次1-2分钟。",
+          "special": "⭐ 宽胸理气要穴，胃胀、恶心、心慌时一按即灵。"
+        }
+      ],
+      "formulas": [
+        {
+          "name": "逍遥散",
+          "composition": "柴胡、当归、白芍、白术、茯苓、薄荷、生姜、甘草",
+          "effect": "疏肝解郁，健脾养血。",
+          "indication": "肝郁脾虚证。两胁作痛，头痛目眩，口燥咽干，神疲食少，月经不调。"
+        },
+        {
+          "name": "半夏厚朴汤",
+          "composition": "半夏、厚朴、茯苓、生姜、苏叶",
+          "effect": "行气散结，降逆化痰。",
+          "indication": "梅核气。咽中如有物阻，吞之不下，吐之不出，胸膈满闷。",
+          "warning": "方中多辛燥燥湿之品，阴虚津伤、舌红少苔者化燥伤阴，不宜盲目服用。"
+        }
+      ],
+      "lifestyle": [
+        "少吃土豆、红薯、豆类等易胀气食物，可多用玫瑰花、陈皮、薄荷泡茶喝，有极好的理气解郁作用。",
+        "注重有氧运动，如慢跑、游泳、八段锦的"双手托天理三焦"，通过规律的肢体舒展把体内的闷气"宣散"出去。",
+        "🔥 董氏奇穴特效组合：情绪极端压抑、气血不和导致周身气痛或胸闷时，可大力按揉手掌大鱼际及小肉际上的【手解穴】（少府穴附近），具有疏解局部气血郁滞、宁心平肝的独特效果。"
+      ]
+    },
+    "湿热质": {
+      "title": "湿热质",
+      "subtitle": "湿热交蒸，如处于夏日桑拿天",
+      "theme": "theme-shire",
+      "color": "#9B5DE5",
+      "description": "湿热就像是身体里起了"桑拿天"，又湿又热，黏黏糊糊。这导致你容易面部出油、长痘，口苦口臭，大便排不爽快，经常感觉身体沉重乏力，好像穿着一件没晒干的湿衣服。",
+      "symptoms": ["面部油光，易生痤疮、湿疹", "口苦口臭，舌苔黄腻", "大便黏滞不爽，马桶难冲", "小便短赤，身体沉重"],
+      "acupoints": [
+        {
+          "name": "阴陵泉",
+          "meridian": "足太阴脾经",
+          "location": "在小腿内侧，当胫骨内侧髁后下方凹陷处。",
+          "effect": "脾经合穴，健脾理气，专司运化水湿，清热利尿。",
+          "method": "用大拇指指腹顺时针方向点揉，力度由轻到重，每次揉按3分钟。",
+          "special": "⭐ 身体自带的"排毒祛湿泵"。"
+        },
+        {
+          "name": "曲池",
+          "meridian": "手阳明大肠经",
+          "location": "在肘横纹外侧端，屈肘时当尺泽与肱骨外上髁连线的中点。",
+          "effect": "清热解表，疏风利湿，调和气血。",
+          "method": "用对侧拇指按揉，有明显酸胀感为度，双侧交替，每次2分钟。",
+          "special": "⭐ 大肠经清热要穴，对皮肤湿疹、长痘有很好的清热止痒效果。"
+        }
+      ],
+      "formulas": [
+        {
+          "name": "龙胆泻肝汤",
+          "composition": "龙胆草、黄芩、栀子、泽泻、木通、车前子、当归、生地、柴胡、甘草",
+          "effect": "清肝胆实火，清利下焦湿热。",
+          "indication": "肝胆湿热下注证。头痛目赤，胁痛口苦，阴部潮湿或带下黄臭。"
+        },
+        {
+          "name": "三仁汤",
+          "composition": "杏仁、白蔻仁、薏苡仁、厚朴、半夏、通草、滑石、竹叶",
+          "effect": "宣畅气机，清利湿热。",
+          "indication": "湿重于热之湿温初起。头痛恶寒，身重疼痛，面色淡黄，胸闷不饥。",
+          "warning": "龙胆泻肝汤中多苦寒苦燥之品，易伤脾胃；方中关木通（历史上成分）具肾毒性，现代成药已全面替换为木通或通草，但仍不可长期大量盲目自行服用。"
+        }
+      ],
+      "lifestyle": [
+        "严格戒烟限酒，少吃麻辣火锅、烧烤、甜食、奶油等高油高糖高辛辣食物。多吃冬瓜、红豆、薏米、莲子等清热利湿之品。",
+        "不宜在烈日潮湿环境中长期运动，可选择清晨或傍晚进行可以出汗的运动（如羽毛球、快走），让湿热随汗液排出，但运动后要及时擦干。",
+        "🔥 董氏奇穴特效提示：湿热下注或湿热蕴结导致下腹不适、皮肤油疹、气血化瘀不畅时，可加揉大拇指背第一节外侧的【妇科穴】（董氏特定，此处通过清热解毒、利湿化瘀，能对下焦湿热起到奇妙的平衡调理作用）。"
+      ]
+    },
+    "平和质": {
+      "title": "平和质",
+      "subtitle": "阴阳平衡，脏腑气血和调",
+      "theme": "theme-pinghe",
+      "color": "#8EA89D",
+      "description": "恭喜你！你属于极为健康的平和体质。体内阴阳平衡，脏腑功能运转良好，气血充足。你对四季变化适应极好，睡眠踏实，精力充沛，继续保持现有的健康生活作息即可！",
+      "symptoms": ["精力充沛，不易疲劳", "睡眠安稳，胃口良好", "面色润泽，目光有神", "舌色淡红，苔薄白"],
+      "acupoints": [
+        {
+          "name": "足三里",
+          "meridian": "足阳明胃经",
+          "location": "在小腿外侧，犊鼻下3寸，胫骨前嵴外一横指处。",
+          "effect": "强壮元阳，健脾和胃，维持身体长久的免疫屏障。",
+          "method": "日常可每周按揉2-3次，每次2分钟，或者在节气交替（如冬至、春分）时艾灸保健。",
+          "special": "⭐ "若要身体安，三里常不干"，健康人群的王牌长寿保健穴。"
+        }
+      ],
+      "formulas": [],
+      "lifestyle": [
+        "保持现有的规律作息，不熬夜，饮食荤素均衡，不暴饮暴食。",
+        "维持适度的体育锻炼，如跑步、瑜伽、羽毛球等，使气血保持长久活络。",
+        "春防风、夏防暑、秋防燥、冬防寒，顺应四季自然规律养生，即是最高级的御医方。"
+      ]
+    }
+  }
+};
+
+    // 状态管理
+    let currentQuestionIndex = 0;
+    const userScores = { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 };
+
+    // 初始化加载
+    function initQuiz() {
+        document.getElementById('main-title').innerText = quizData.title;
+        document.getElementById('main-subtitle').innerText = quizData.subtitle;
+        
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = ''; // 清空
+
+        quizData.questions.forEach((q, idx) => {
+            const quizBox = document.createElement('div');
+            quizBox.className = `quiz-box ${idx === 0 ? 'active' : ''}`;
+            quizBox.id = `question-${idx}`;
+
+            let optionsHtml = '';
+            q.options.forEach((opt, optIdx) => {
+                optionsHtml += `
+                    <div class="option-card" onclick="selectOption(${idx}, ${optIdx})">
+                        <h3>${opt.text}</h3>
+                        <p>${opt.desc}</p>
+                    </div>
+                `;
+            });
+
+            quizBox.innerHTML = `
+                <div class="question-title">${q.text}</div>
+                <div class="question-sub">${q.subtext}</div>
+                <div class="options-list">${optionsHtml}</div>
+            `;
+            container.appendChild(quizBox);
+        });
+        updateProgressBar();
+    }
+
+    // 更新顶置进度条
+    function updateProgressBar() {
+        const total = quizData.questions.length;
+        const progressPercent = (currentQuestionIndex / total) * 100;
+        document.getElementById('progress').style.width = `${progressPercent}%`;
+    }
+
+    // 答题选择触发逻辑
+    function selectOption(qIdx, optIdx) {
+        // 1. 累加计分
+        const selectedOption = quizData.questions[qIdx].options[optIdx];
+        for (const [constitution, score] of Object.entries(selectedOption.scores)) {
+            userScores[constitution] += score;
+        }
+
+        // 2. 路由跳转或渲染结果
+        const currentBox = document.getElementById(`question-${qIdx}`);
+        currentBox.classList.remove('active');
+
+        currentQuestionIndex++;
+        
+        if (currentQuestionIndex < quizData.questions.length) {
+            const nextBox = document.getElementById(`question-${currentQuestionIndex}`);
+            nextBox.classList.add('active');
+            updateProgressBar();
+        } else {
+            document.getElementById('progress').style.width = `100%`;
+            calculateAndRenderResult();
+        }
+    }
+
+    // 核心计分制决策逻辑
+    function calculateAndRenderResult() {
+        document.getElementById('quiz-container').style.display = 'none';
+        
+        // 获取分值最高的体质
+        let finalConstitution = Object.keys(userScores).reduce((a, b) => userScores[a] > userScores[b] ? a : b);
+        
+        // 兜底平和质特判：如果非平和质的最高分过低，或者分数持平，说明身心和调
+        if (userScores["平和质"] >= 6 || (userScores[finalConstitution] === userScores["平和质"] && userScores[finalConstitution] < 5)) {
+            finalConstitution = "平和质";
+        }
+
+        const data = quizData.results[finalConstitution];
+
+        // 3. 动态唤醒CSS皮肤色彩切换
+        const rootBody = document.getElementById('body-root');
+        rootBody.className = data.theme;
+
+        // 渲染基础信息
+        document.getElementById('res-badge').innerText = `辨证结果：${finalConstitution}`;
+        document.getElementById('res-title').innerText = data.title;
+        document.getElementById('res-title').style.color = data.color;
+        document.getElementById('res-desc').innerHTML = `<strong>体质调和寄语：</strong>${data.description}`;
+
+        // 渲染典型症状
+        const symptomsAnchor = document.getElementById('res-symptoms');
+        symptomsAnchor.innerHTML = data.symptoms.map(s => `<span class="tag">${s}</span>`).join('');
+
+        // 渲染穴位卡片库
+        const acupointsAnchor = document.getElementById('res-acupoints');
+        acupointsAnchor.innerHTML = '';
+        data.acupoints.forEach((acu, i) => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <div class="item-header">
+                    <span class="item-name">📍 ${acu.name}</span>
+                    <span class="item-meta">${acu.meridian}</span>
+                </div>
+                <div class="item-text"><strong>定位：</strong>${acu.location}</div>
+                <div class="item-text"><strong>功效：</strong>${acu.effect}</div>
+            `;
+            // 点击弹窗抽屉
+            card.onclick = () => openDrawer('acupoint', acu);
+            acupointsAnchor.appendChild(card);
+        });
+
+        // 渲染方剂卡片库（如果存在方剂数据）
+        const formulaSection = document.getElementById('formula-section');
+        const formulasAnchor = document.getElementById('res-formulas');
+        if (data.formulas && data.formulas.length > 0) {
+            formulaSection.style.display = 'block';
+            formulasAnchor.innerHTML = '';
+            data.formulas.forEach((form) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-name">☕ ${form.name}</span>
+                    </div>
+                    <div class="item-text"><strong>组成：</strong>${form.composition}</div>
+                    <div class="item-text"><strong>主治：</strong>${form.indication}</div>
+                `;
+                card.onclick = () => openDrawer('formula', form);
+                formulasAnchor.appendChild(card);
+            });
+        } else {
+            formulaSection.style.display = 'none';
+        }
+
+        // 渲染生活健康膳食建议
+        const lifestyleAnchor = document.getElementById('res-lifestyle');
+        lifestyleAnchor.innerHTML = data.lifestyle.map(l => `<div class="tag" style="text-align:left; border-left:2px solid var(--primary-color)">🌿 ${l}</div>`).join('');
+
+        // 展现结果面板
+        document.getElementById('result-container').style.display = 'block';
+    }
+
+    // 抽屉弹窗逻辑 (Drawer Control)
+    function openDrawer(type, item) {
+        const overlay = document.getElementById('overlay');
+        const drawer = document.getElementById('drawer');
+        const content = document.getElementById('drawer-content');
+
+        let html = '';
+        if (type === 'acupoint') {
+            html = `
+                <h2 style="font-size:20px; margin-bottom:14px; color: var(--primary-color)">📍 ${item.name} (${item.meridian})</h2>
+                <p style="margin-bottom:10px; font-size:14px;"><strong>解剖与精准定位：</strong><br>${item.location}</p>
+                <p style="margin-bottom:10px; font-size:14px;"><strong>核心调理机制：</strong><br>${item.effect}</p>
+                <p style="margin-bottom:10px; font-size:14px; background:#F9F9F9; padding:12px; border-radius:6px;"><strong>💡 居家自我操作指南：</strong><br>${item.method}</p>
+                <p style="font-size:13px; color:#D9534F; font-weight:500; margin-top:15px; border-top:1px dashed #DDD; padding-top:10px;">${item.special}</p>
+            `;
+        } else if (type === 'formula') {
+            html = `
+                <h2 style="font-size:20px; margin-bottom:14px; color: var(--primary-color)">☕ 经典医籍方剂：${item.name}</h2>
+                <p style="margin-bottom:10px; font-size:14px;"><strong>中药配伍配比：</strong><br>${item.composition}</p>
+                <p style="margin-bottom:10px; font-size:14px;"><strong>传统经典主治：</strong><br>${item.indication}</p>
+                <p style="margin-bottom:10px; font-size:14px;"><strong>功用概括：</strong><br>${item.effect}</p>
+                
+                <div class="warning-box">
+                    <span class="warning-icon">⚠️</span>
+                    <div class="warning-content">
+                        <strong>循证安全边界提示：</strong>
+                        <p>${item.warning}</p>
+                        <p style="margin-top:4px; font-weight:600;">自学中医切勿盲目自行抓药熬药，请在执业医师指导下进行临床处方使用。</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = html;
+        overlay.classList.add('open');
+        drawer.classList.add('open');
+    }
+
+    function closeDrawer() {
+        document.getElementById('overlay').classList.remove('open');
+        document.getElementById('drawer').classList.remove('open');
+    }
+
+    // 重置测评
+    function restartQuiz() {
+        currentQuestionIndex = 0;
+        for (const k in userScores) userScores[k] = 0;
+        
+        document.getElementById('body-root').className = 'theme-pinghe';
+        document.getElementById('result-container').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+        initQuiz();
+    }
+
+    // 运行
+    window.onload = initQuiz;
+</script>
+</body>
+</html>
