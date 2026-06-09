@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中医体质自测</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #FAF8F5;
+            color: #3C3A36;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 680px;
+            margin: 40px auto;
+            background: white;
+            border: 1px solid #E6E1DA;
+            border-radius: 12px;
+            padding: 40px 30px;
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .header p { font-size: 14px; color: #7A746B; }
+        
+        .quiz-box { display: none; animation: fadeIn 0.4s ease forwards; }
+        .quiz-box.active { display: block; }
+        .question-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+        .question-sub { font-size: 13px; color: #7A746B; margin-bottom: 24px; }
+        
+        .option-card {
+            background: white;
+            border: 1px solid #E6E1DA;
+            border-radius: 12px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.25s;
+            margin-bottom: 16px;
+        }
+        .option-card:hover {
+            border-color: #8EA89D;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .option-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .option-card p { font-size: 13px; color: #7A746B; }
+        
+        .result-box { display: none; animation: fadeIn 0.5s ease forwards; }
+        .result-title { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: #FF6B6B; }
+        .result-desc { font-size: 15px; margin-bottom: 30px; background: #FDFDFD; padding: 16px; border-radius: 8px; }
+        
+        .btn-restart {
+            display: block; width: 100%; text-align: center; padding: 14px;
+            background: #8EA89D; color: white; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 35px;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>中医体质自测</h1>
+            <p>5个日常问题，帮你找到专属调理方向</p>
+        </div>
+        <div id="quiz-container"></div>
+        <div id="result-container" class="result-box"></div>
+    </div>
+
+    <script>
+        // 简化的测试数据（避免语法错误）
+        const quizData = {
+            title: "中医体质自测",
+            questions: [
+                {
+                    id: "q1",
+                    text: "1. 你平时更怕冷还是怕热？",
+                    subtext: "想象在一个开着标准空调的房间里，你的真实感受是？",
+                    options: [
+                        { text: "怕冷，喜欢温暖", desc: "手脚容易冰凉，总想喝温热水", scores: { "阳虚质": 3, "阴虚质": 0, "气滞质": 1, "湿热质": 0, "平和质": 0 }},
+                        { text: "怕热，喜欢凉爽", desc: "体热容易出汗，喜欢喝冰饮", scores: { "阳虚质": 0, "阴虚质": 3, "气滞质": 0, "湿热质": 2, "平和质": 0 }},
+                        { text: "不特别怕冷，也不特别怕热", desc: "对温度适应良好", scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }}
+                    ]
+                },
+                {
+                    id: "q2",
+                    text: "2. 早起观察自己的舌苔，更接近哪种？",
+                    subtext: "刷牙前对着镜子看一眼",
+                    options: [
+                        { text: "舌苔发白、偏厚", desc: "舌体可能有点胖大", scores: { "阳虚质": 3, "阴虚质": 0, "气滞质": 1, "湿热质": 0, "平和质": 0 }},
+                        { text: "舌苔发黄、腻浊", desc: "感觉嘴里黏腻", scores: { "阳虚质": 0, "阴虚质": 1, "气滞质": 1, "湿热质": 3, "平和质": 0 }},
+                        { text: "舌头很红，几乎没有舌苔", desc: "嘴里经常容易干", scores: { "阳虚质": 0, "阴虚质": 3, "气滞质": 0, "湿热质": 1, "平和质": 0 }},
+                        { text: "淡红舌，薄白苔", desc: "舌头颜色粉红润泽", scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }}
+                    ]
+                },
+                {
+                    id: "q3",
+                    text: "3. 过去一个月内，你的整体精神状态更像？",
+                    subtext: "身体和心理的综合体验",
+                    options: [
+                        { text: "容易劳累，懒得动弹", desc: "稍微运动就觉得累", scores: { "阳虚质": 3, "阴虚质": 1, "气滞质": 1, "湿热质": 1, "平和质": 0 }},
+                        { text: "经常烦躁，容易叹气发火", desc: "压力大，情绪憋闷", scores: { "阳虚质": 0, "阴虚质": 1, "气滞质": 3, "湿热质": 1, "平和质": 0 }},
+                        { text: "精力还不错，情绪相对稳定", desc: "日常情绪可以自我调节", scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }}
+                    ]
+                },
+                {
+                    id: "q4",
+                    text: "4. 你的胃口、消化和排便情况如何？",
+                    subtext: "脾胃为后天之本",
+                    options: [
+                        { text: "吃凉的或者油腻就容易拉肚子", desc: "肚子经常冷痛", scores: { "阳虚质": 3, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 }},
+                        { text: "经常肚子胀气，呃逆嗳气", desc: "饭后或者生气时肚子特别胀", scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 3, "湿热质": 1, "平和质": 0 }},
+                        { text: "大便黏滞，小便发黄", desc: "上完厕所马桶很难冲干净", scores: { "阳虚质": 0, "阴虚质": 1, "气滞质": 1, "湿热质": 3, "平和质": 0 }},
+                        { text: "饮食正常，排便规律通畅", desc: "胃口好，消化快", scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }}
+                    ]
+                },
+                {
+                    id: "q5",
+                    text: "5. 你的日常睡眠质量属于哪一种？",
+                    subtext: "睡眠质量是重要指标",
+                    options: [
+                        { text: "入睡困难，或者夜间极易醒来", desc: "躺下翻来覆去睡不着", scores: { "阳虚质": 0, "阴虚质": 3, "气滞质": 2, "湿热质": 1, "平和质": 0 }},
+                        { text: "白天总犯困，怎么睡都不够", desc: "晚上睡很久白天依然头脑昏沉", scores: { "阳虚质": 2, "阴虚质": 0, "气滞质": 0, "湿热质": 3, "平和质": 0 }},
+                        { text: "睡眠挺规律，入睡快且沉", desc: "一般半小时内能入睡", scores: { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 3 }}
+                    ]
+                }
+            ],
+            results: {
+                "阳虚质": { title: "阳虚质", desc: "阳气不足，怕冷，手脚冰凉，精神萎靡。建议多吃温性食物，艾灸足三里、关元等穴位。" },
+                "阴虚质": { title: "阴虚质", desc: "阴液亏损，怕热，手脚心发热，失眠多梦。建议避免熬夜，忌食辛辣燥热食物，按揉三阴交、太溪等穴位。" },
+                "气滞质": { title: "气滞质", desc: "肝气郁结，情绪郁闷，容易叹气发火，胃胀嗳气。建议少吃胀气食物，多运动舒展，按揉太冲、内关等穴位。" },
+                "湿热质": { title: "湿热质", desc: "湿热内蕴，面部出油，口苦口臭，大便黏滞。建议少吃辛辣油腻，多吃利湿食物，按揉阴陵泉、曲池等穴位。" },
+                "平和质": { title: "平和质", desc: "恭喜你！阴阳平衡，精力充沛，睡眠安稳。继续保持健康的生活方式即可。建议每周按揉足三里保健。" }
+            }
+        };
+
+        let currentQuestionIndex = 0;
+        const userScores = { "阳虚质": 0, "阴虚质": 0, "气滞质": 0, "湿热质": 0, "平和质": 0 };
+
+        // 初始化
+        function initQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            
+            quizData.questions.forEach((q, idx) => {
+                const quizBox = document.createElement('div');
+                quizBox.className = `quiz-box ${idx === 0 ? 'active' : ''}`;
+                quizBox.id = `question-${idx}`;
+                
+                let optionsHtml = '';
+                q.options.forEach((opt, optIdx) => {
+                    optionsHtml += `
+                        <div class="option-card" onclick="selectOption(${idx}, ${optIdx})">
+                            <h3>${opt.text}</h3>
+                            <p>${opt.desc}</p>
+                        </div>
+                    `;
+                });
+                
+                quizBox.innerHTML = `
+                    <div class="question-title">${q.text}</div>
+                    <div class="question-sub">${q.subtext}</div>
+                    <div>${optionsHtml}</div>
+                `;
+                container.appendChild(quizBox);
+            });
+        }
+
+        // 选择选项
+        function selectOption(qIdx, optIdx) {
+            const selectedOption = quizData.questions[qIdx].options[optIdx];
+            for (const [constitution, score] of Object.entries(selectedOption.scores)) {
+                userScores[constitution] += score;
+            }
+            
+            document.getElementById(`question-${qIdx}`).classList.remove('active');
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < quizData.questions.length) {
+                document.getElementById(`question-${currentQuestionIndex}`).classList.add('active');
+            } else {
+                calculateAndRenderResult();
+            }
+        }
+
+        // 计算结果并渲染
+        function calculateAndRenderResult() {
+            document.getElementById('quiz-container').style.display = 'none';
+            
+            let finalConstitution = Object.keys(userScores).reduce((a, b) => userScores[a] > userScores[b] ? a : b);
+            
+            if (userScores["平和质"] >= 6 || (userScores[finalConstitution] === userScores["平和质"] && userScores[finalConstitution] < 5)) {
+                finalConstitution = "平和质";
+            }
+            
+            const data = quizData.results[finalConstitution];
+            const resultContainer = document.getElementById('result-container');
+            
+            resultContainer.innerHTML = `
+                <div class="result-title">${data.title}</div>
+                <div class="result-desc">${data.desc}</div>
+                <button class="btn-restart" onclick="restartQuiz()">重新测评</button>
+            `;
+            resultContainer.classList.add('active');
+        }
+
+        // 重新开始
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            for (const k in userScores) userScores[k] = 0;
+            
+            document.getElementById('result-container').classList.remove('active');
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('question-0').classList.add('active');
+        }
+
+        // 页面加载完成后初始化
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
